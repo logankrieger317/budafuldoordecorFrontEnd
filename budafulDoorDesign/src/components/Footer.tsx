@@ -119,34 +119,39 @@ export default function Footer(): JSX.Element {
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Link 
-                href="/about"
+                href="#/"
+                color="inherit"
                 sx={{ 
-                  color: 'white',
+                  display: 'block', 
+                  mb: 1,
                   textDecoration: 'none',
-                  '&:hover': { color: theme.palette.primary.light }
+                  '&:hover': { color: 'primary.main' }
                 }}
               >
-                About Us
+                Home
               </Link>
               <Link 
-                href="/shipping"
+                href="#/products"
+                color="inherit"
                 sx={{ 
-                  color: 'white',
+                  display: 'block', 
+                  mb: 1,
                   textDecoration: 'none',
-                  '&:hover': { color: theme.palette.primary.light }
+                  '&:hover': { color: 'primary.main' }
                 }}
               >
-                Shipping Policy
+                Products
               </Link>
               <Link 
-                href="/returns"
+                href="#/contact"
+                color="inherit"
                 sx={{ 
-                  color: 'white',
+                  display: 'block',
                   textDecoration: 'none',
-                  '&:hover': { color: theme.palette.primary.light }
+                  '&:hover': { color: 'primary.main' }
                 }}
               >
-                Returns & Refunds
+                Contact
               </Link>
             </Box>
           </Grid>
@@ -163,7 +168,7 @@ export default function Footer(): JSX.Element {
           }}
         >
           <Typography variant="body2" color="rgba(255, 255, 255, 0.7)">
-            © {currentYear} Budaful Door Designs. All rights reserved.
+            {currentYear} Budaful Door Designs. All rights reserved.
           </Typography>
         </Box>
       </Container>

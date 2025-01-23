@@ -93,10 +93,13 @@ export default function HeroSlider({ slides, fallbackImage }: HeroSliderProps): 
                 to="/products"
                 variant="contained"
                 color="primary"
-                size={isMobile ? "medium" : "large"}
+                size="large"
                 sx={{
-                  px: { xs: 3, sm: 4, md: 6 },
-                  py: { xs: 1, sm: 1.5, md: 2 },
+                  mt: 4,
+                  px: 4,
+                  py: 1.5,
+                  fontSize: '1.1rem',
+                  textTransform: 'none'
                 }}
               >
                 Shop Now

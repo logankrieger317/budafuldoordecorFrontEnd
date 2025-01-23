@@ -28,10 +28,10 @@ export default function OrderConfirmation() {
         <Typography variant="body1" color="text.secondary" paragraph>
           We will process your order as soon as possible and send you updates via email.
         </Typography>
-        <Button
-          variant="contained"
+        <Button 
+          variant="contained" 
           color="primary"
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/home')}
           sx={{ mt: 3 }}
         >
           Continue Shopping

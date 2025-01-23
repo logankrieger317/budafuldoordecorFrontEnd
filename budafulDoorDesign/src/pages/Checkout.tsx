@@ -235,7 +235,7 @@ export default function Checkout(): JSX.Element {
 
       // Clear cart and redirect to confirmation page
       dispatch(clearCart());
-      navigate("/order-confirmation");
+      navigate("/checkout/order-confirmation");
     } catch (error) {
       console.error("Error processing order:", error);
       setErrorMessage("Failed to process order. Please try again.");
@@ -448,7 +448,7 @@ export default function Checkout(): JSX.Element {
           Your cart is empty
         </Typography>
         <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-          <Button variant="contained" onClick={() => navigate("/")}>
+          <Button variant="contained" onClick={() => navigate("/home")}>
             Continue Shopping
           </Button>
         </Box>

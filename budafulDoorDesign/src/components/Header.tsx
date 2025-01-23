@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { 
   AppBar, 
@@ -30,32 +30,34 @@ export default function Header(): JSX.Element {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   const menuItems = [
-    { text: 'Home', path: '/' },
+    { text: 'Home', path: '/home' },
     { text: 'Products', path: '/products' },
-    { text: 'About', path: '/about' },
-    { text: 'Contact', path: '/contact' },
+    { text: 'About', path: '/about-us' },
+    { text: 'Contact', path: '/get-in-touch' },
   ];
 
   const handleMenuClick = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
-  const handleMenuItemClick = () => {
+  const handleMenuItemClick = (path: string) => {
     setMobileMenuOpen(false);
+    navigate(path);
   };
 
   return (
-    <AppBar position="sticky" color="default" elevation={0} sx={{ bgcolor: 'background.paper' }}>
+    <AppBar position="sticky" sx={{ bgcolor: 'background.paper' }}>
       <Container maxWidth="lg">
         <Toolbar sx={{ justifyContent: 'space-between', py: { xs: 1, md: 2 } }}>
           <Typography
             variant="h6"
             component={Link}
-            to="/"
+            to="/home"
             sx={{
               color: 'primary.main',
               textDecoration: 'none',
@@ -71,9 +73,7 @@ export default function Header(): JSX.Element {
             {menuItems.map((item) => (
               <Button
                 key={item.text}
-                component={Link}
-                to={item.path}
-                color="inherit"
+                onClick={() => handleMenuItemClick(item.path)}
                 sx={{ fontWeight: 500 }}
               >
                 {item.text}
@@ -169,9 +169,7 @@ export default function Header(): JSX.Element {
             {menuItems.map((item) => (
               <ListItem 
                 key={item.text}
-                component={Link}
-                to={item.path}
-                onClick={handleMenuItemClick}
+                onClick={() => handleMenuItemClick(item.path)}
                 sx={{ 
                   color: 'inherit',
                   textDecoration: 'none',

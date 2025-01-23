@@ -19,22 +19,22 @@ export const heroSlides = [
 export const categories = [
   {
     name: 'Florals',
-    image: '/images/FloralPlaceholder.jpeg',
-    link: '/products?category=florals',
+    image: '/FloralPlaceholder.jpeg',
+    link: '#/products?category=florals',
   },
   {
     name: 'Greenery',
-    image: '/images/GreeneryPlaceholder.jpeg',
-    link: '/products?category=greenery',
+    image: '/GreeneryPlaceholder.jpeg',
+    link: '#/products?category=greenery',
   },
   {
     name: 'Ribbons',
-    image: '/images/sampleRibbon.jpeg',
-    link: '/products?category=ribbons',
+    image: '/counterPlaceholder.webp',
+    link: '#/products?category=ribbons',
   },
   {
     name: 'Containers',
-    image: '/images/ContainersPlaceholder.jpeg',
-    link: '/products?category=containers',
+    image: '/ContainersPlaceholder.jpeg',
+    link: '#/products?category=containers',
   },
 ];

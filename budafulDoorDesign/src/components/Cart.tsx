@@ -98,11 +98,13 @@ export default function Cart(): JSX.Element | null {
         <Box sx={{ mt: 2, textAlign: 'right' }}>
           <Typography variant="subtitle1">Total: ${total.toFixed(2)}</Typography>
           <Box sx={{ mt: 1, display: 'flex', gap: 1, flexDirection: 'column' }}>
-            <Link to="/checkout" style={{ textDecoration: 'none' }} onClick={() => dispatch(toggleCart())}>
-              <Button variant="contained" color="primary" fullWidth>
-                Proceed to Checkout
-              </Button>
-            </Link>
+            {items.length > 0 && (
+              <Link to="/checkout" style={{ textDecoration: 'none' }} onClick={() => dispatch(toggleCart())}>
+                <Button variant="contained" color="primary" fullWidth>
+                  Proceed to Checkout
+                </Button>
+              </Link>
+            )}
             <Button
               variant="outlined"
               color="primary"
