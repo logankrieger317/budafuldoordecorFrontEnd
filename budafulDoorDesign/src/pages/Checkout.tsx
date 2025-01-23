@@ -40,15 +40,31 @@ const initialCustomerInfo: CustomerInfo = {
   notes: "",
 };
 
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const isValidPhone = (phone: string): boolean => {
+  // Accepts formats: (123) 456-7890, 123-456-7890, 1234567890
+  const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+  return phoneRegex.test(phone);
+};
+
 const steps = ["Review Order", "Customer Information", "Confirm Order"];
 
 export default function Checkout(): JSX.Element {
   const [activeStep, setActiveStep] = useState(0);
-  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>(initialCustomerInfo);
+  const [customerInfo, setCustomerInfo] =
+    useState<CustomerInfo>(initialCustomerInfo);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<{
+    email?: string;
+    phone?: string;
+  }>({});
 
   const { items } = useSelector((state: RootState) => state.cart);
   const dispatch = useDispatch();
@@ -72,74 +88,157 @@ export default function Checkout(): JSX.Element {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
-  const handleCustomerInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleCustomerInfoChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    if (name.startsWith('address.')) {
-      const addressField = name.split('.')[1] as keyof typeof customerInfo.address;
-      setCustomerInfo(prev => ({
+
+    // Clear validation error when user starts typing
+    if (name === "email" || name === "phone") {
+      setValidationErrors((prev) => ({
         ...prev,
-        address: {
-          ...prev.address!,
-          [addressField]: value
-        }
+        [name]: undefined,
       }));
+    }
+
+    if (name.startsWith("address.")) {
+      const addressField = name.split(
+        "."
+      )[1] as keyof typeof customerInfo.address;
+      setCustomerInfo((prev) => {
+        const newInfo = {
+          ...prev,
+          address: {
+            ...prev.address!,
+            [addressField]: value,
+          },
+        };
+        console.log(`Updating ${name} to:`, value);
+        console.log("New customer info:", newInfo);
+        return newInfo;
+      });
     } else {
-      setCustomerInfo(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setCustomerInfo((prev) => {
+        const newInfo = {
+          ...prev,
+          [name]: value,
+        };
+        console.log(`Updating ${name} to:`, value);
+        console.log("New customer info:", newInfo);
+        return newInfo;
+      });
     }
   };
 
   const validateForm = () => {
     const { firstName, lastName, email, phone, address } = customerInfo;
-    return (
-      firstName &&
-      lastName &&
-      email &&
-      phone &&
-      address?.street &&
-      address?.city &&
-      address?.state &&
-      address?.zipCode
-    );
+    const errors: { email?: string; phone?: string } = {};
+
+    console.log("Validating form with data:", {
+      firstName,
+      lastName,
+      email,
+      phone,
+      address,
+    });
+
+    if (!firstName || !lastName) {
+      console.log("Name validation failed");
+      return false;
+    }
+
+    if (!email || !isValidEmail(email)) {
+      console.log("Email validation failed");
+      errors.email = "Please enter a valid email address";
+    }
+
+    if (!phone || !isValidPhone(phone)) {
+      console.log("Phone validation failed");
+      errors.phone = "Please enter a valid phone number";
+    }
+
+    if (
+      !address?.street ||
+      !address?.city ||
+      !address?.state ||
+      !address?.zipCode
+    ) {
+      console.log("Address validation failed");
+      return false;
+    }
+
+    const hasErrors = Object.keys(errors).length > 0;
+    console.log("Validation result:", hasErrors ? "Failed" : "Passed");
+
+    if (hasErrors) {
+      setValidationErrors(errors);
+      return false;
+    }
+
+    return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    // Validate form first
     if (!validateForm()) {
-      setErrorMessage("Please fill in all required fields");
+      setErrorMessage("Please fill in all required fields correctly");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
+      // Log customer info before preparing order details
+      console.log("Customer info before submission:", {
+        firstName: customerInfo.firstName,
+        lastName: customerInfo.lastName,
+        email: customerInfo.email,
+        phone: customerInfo.phone,
+        notes: customerInfo.notes,
+        address: customerInfo.address,
+      });
+
       // Prepare order details
       const orderDetails = {
         customerInfo,
         items,
         total,
-        orderDate: new Date().toISOString()
+        orderDate: new Date().toISOString(),
       };
 
+      console.log(
+        "Order details before sending:",
+        JSON.stringify(orderDetails, null, 2)
+      );
+
       // Send confirmation email to customer
-      const emailSuccess = await emailService.sendOrderConfirmation(orderDetails);
+      const emailSuccess = await emailService.sendOrderConfirmation(
+        orderDetails
+      );
+      console.log("Confirmation email result:", emailSuccess);
 
       // Send notification email to admin
-      const notificationSuccess = await emailService.sendOrderNotification(orderDetails);
+      const notificationSuccess = await emailService.sendOrderNotification(
+        orderDetails
+      );
+      console.log("Notification email result:", notificationSuccess);
 
       if (!emailSuccess || !notificationSuccess) {
-        setErrorMessage('Order placed but there was an issue sending confirmation emails.');
+        setErrorMessage(
+          "Order placed but there was an issue sending confirmation emails."
+        );
       }
 
       // Clear cart and redirect to confirmation page
       dispatch(clearCart());
-      navigate('/order-confirmation');
+      navigate("/order-confirmation");
     } catch (error) {
-      console.error('Error processing order:', error);
-      setErrorMessage('Failed to process order. Please try again.');
+      console.error("Error processing order:", error);
+      setErrorMessage("Failed to process order. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -155,11 +254,12 @@ export default function Checkout(): JSX.Element {
           <ListItem key={item.id}>
             <Box sx={{ flexGrow: 1 }}>
               <Typography variant="body1">{item.name}</Typography>
-              {item.options && Object.entries(item.options).map(([key, value]) => (
-                <Typography key={key} variant="body2" color="text.secondary">
-                  {key}: {value}
-                </Typography>
-              ))}
+              {item.options &&
+                Object.entries(item.options).map(([key, value]) => (
+                  <Typography key={key} variant="body2" color="text.secondary">
+                    {key}: {value}
+                  </Typography>
+                ))}
               <Typography variant="body2" color="text.secondary">
                 Quantity: {item.quantity}
               </Typography>
@@ -213,6 +313,8 @@ export default function Checkout(): JSX.Element {
               type="email"
               value={customerInfo.email}
               onChange={handleCustomerInfoChange}
+              error={!!validationErrors.email}
+              helperText={validationErrors.email}
             />
           </Grid>
           <Grid item xs={12}>
@@ -223,6 +325,8 @@ export default function Checkout(): JSX.Element {
               label="Phone Number"
               value={customerInfo.phone}
               onChange={handleCustomerInfoChange}
+              error={!!validationErrors.phone}
+              helperText={validationErrors.phone || "Format: 123-456-7890"}
             />
           </Grid>
           <Grid item xs={12}>
@@ -305,7 +409,9 @@ export default function Checkout(): JSX.Element {
           {customerInfo.address && (
             <Grid item xs={12}>
               <Typography variant="body2">
-                Address: {customerInfo.address.street}, {customerInfo.address.city}, {customerInfo.address.state} {customerInfo.address.zipCode}
+                Address: {customerInfo.address.street},{" "}
+                {customerInfo.address.city}, {customerInfo.address.state}{" "}
+                {customerInfo.address.zipCode}
               </Typography>
             </Grid>
           )}
