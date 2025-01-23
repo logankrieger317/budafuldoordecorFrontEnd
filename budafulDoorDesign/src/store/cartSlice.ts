@@ -1,12 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-
-export interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-}
+import { CartItem } from '../types';
 
 interface CartState {
   items: CartItem[];
@@ -23,18 +16,30 @@ const cartSlice = createSlice({
   initialState,
   reducers: {
     addItem: (state, action: PayloadAction<CartItem>) => {
-      const existingItem = state.items.find(item => item.id === action.payload.id);
+      const existingItem = state.items.find(
+        item => 
+          item.id === action.payload.id && 
+          JSON.stringify(item.options) === JSON.stringify(action.payload.options)
+      );
       if (existingItem) {
-        existingItem.quantity += 1;
+        existingItem.quantity += action.payload.quantity;
       } else {
-        state.items.push({ ...action.payload, quantity: 1 });
+        state.items.push(action.payload);
       }
     },
-    removeItem: (state, action: PayloadAction<string>) => {
-      state.items = state.items.filter(item => item.id !== action.payload);
+    removeItem: (state, action: PayloadAction<{ id: string; options?: Record<string, string> }>) => {
+      state.items = state.items.filter(
+        item => 
+          item.id !== action.payload.id || 
+          JSON.stringify(item.options) !== JSON.stringify(action.payload.options)
+      );
     },
-    updateQuantity: (state, action: PayloadAction<{ id: string; quantity: number }>) => {
-      const item = state.items.find(item => item.id === action.payload.id);
+    updateQuantity: (state, action: PayloadAction<{ id: string; quantity: number; options?: Record<string, string> }>) => {
+      const item = state.items.find(
+        item => 
+          item.id === action.payload.id && 
+          JSON.stringify(item.options) === JSON.stringify(action.payload.options)
+      );
       if (item) {
         item.quantity = Math.max(0, action.payload.quantity);
       }

@@ -11,6 +11,8 @@ import Home from './pages/Home';
 import Products from './pages/Products';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import Checkout from './pages/Checkout';
+import OrderConfirmation from './pages/OrderConfirmation';
 
 const theme = createTheme({
   palette: {
@@ -64,7 +66,7 @@ const theme = createTheme({
 // Wrapper component to conditionally render CategoryNav
 function AppContent(): JSX.Element {
   const location = useLocation();
-  const showCategoryNav = location.pathname === '/products';
+  const showCategoryNav = location.pathname === '/' || location.pathname === '/products';
 
   return (
     <Box sx={{ 
@@ -75,15 +77,17 @@ function AppContent(): JSX.Element {
     }}>
       <Header />
       {showCategoryNav && <CategoryNav />}
-      <Cart />
       <Box component="main" sx={{ flex: 1 }}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/order-confirmation" element={<OrderConfirmation />} />
         </Routes>
       </Box>
+      <Cart />
       <Footer />
     </Box>
   );

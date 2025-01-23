@@ -10,6 +10,7 @@ import {
   CardContent,
   Snackbar,
   Alert,
+  MenuItem,
 } from '@mui/material';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
@@ -20,6 +21,7 @@ interface FormData {
   name: string;
   email: string;
   phone: string;
+  inquiryType: string;
   message: string;
 }
 
@@ -27,8 +29,17 @@ const initialFormData: FormData = {
   name: '',
   email: '',
   phone: '',
+  inquiryType: '',
   message: '',
 };
+
+const inquiryTypes = [
+  'Custom Order Request',
+  'Product Inquiry',
+  'Wholesale Information',
+  'General Question',
+  'Other'
+];
 
 export default function Contact(): JSX.Element {
   const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -46,8 +57,7 @@ export default function Contact(): JSX.Element {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Here you would typically send the form data to your backend
-    // For now, we'll just show a success message
-    if (formData.name && formData.email && formData.message) {
+    if (formData.name && formData.email && formData.message && formData.inquiryType) {
       setShowSuccess(true);
       setFormData(initialFormData);
     } else {
@@ -75,7 +85,7 @@ export default function Contact(): JSX.Element {
               textAlign: 'center',
             }}
           >
-            Contact Us
+            Let's Connect!
           </Typography>
           <Typography 
             variant="h5" 
@@ -86,7 +96,7 @@ export default function Contact(): JSX.Element {
               opacity: 0.9,
             }}
           >
-            We'd love to hear from you! Send us a message and we'll respond as soon as possible.
+            Whether you need custom designs, crafting supplies, or have questions about our products, I'm here to help!
           </Typography>
         </Container>
       </Box>
@@ -103,26 +113,26 @@ export default function Contact(): JSX.Element {
               <Grid container spacing={3}>
                 {[
                   {
+                    icon: <LocationOnIcon sx={{ fontSize: 24 }} />,
+                    title: 'Location',
+                    content: 'Buda, Texas',
+                  },
+                  {
                     icon: <PhoneIcon sx={{ fontSize: 24 }} />,
                     title: 'Phone',
-                    content: '(123) 456-7890',
-                    link: 'tel:+1234567890',
+                    content: '(512) 797-2008',
+                    link: 'tel:+15127972008',
                   },
                   {
                     icon: <EmailIcon sx={{ fontSize: 24 }} />,
                     title: 'Email',
-                    content: 'support@budafuldoordesigns.com',
-                    link: 'mailto:support@budafuldoordesigns.com',
-                  },
-                  {
-                    icon: <LocationOnIcon sx={{ fontSize: 24 }} />,
-                    title: 'Location',
-                    content: 'Buda, TX',
+                    content: 'contact@budafuldoordesigns.com',
+                    link: 'mailto:contact@budafuldoordesigns.com',
                   },
                   {
                     icon: <AccessTimeIcon sx={{ fontSize: 24 }} />,
-                    title: 'Business Hours',
-                    content: 'Mon - Fri: 9am - 5pm CST',
+                    title: 'Response Time',
+                    content: 'Within 24-48 hours',
                   },
                 ].map((item, index) => (
                   <Grid item xs={12} key={index}>
@@ -188,50 +198,68 @@ export default function Contact(): JSX.Element {
             }}>
               <CardContent>
                 <Typography variant="h4" sx={{ mb: 4 }}>
-                  Send us a Message
+                  Send me a Message
                 </Typography>
                 <Box component="form" onSubmit={handleSubmit}>
                   <Grid container spacing={3}>
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
+                        required
                         label="Name"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
-                        required
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
+                        required
                         label="Email"
                         name="email"
                         type="email"
                         value={formData.email}
                         onChange={handleChange}
-                        required
                       />
                     </Grid>
-                    <Grid item xs={12}>
+                    <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
-                        label="Phone (optional)"
+                        label="Phone"
                         name="phone"
+                        type="tel"
                         value={formData.phone}
                         onChange={handleChange}
                       />
                     </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        required
+                        select
+                        label="Inquiry Type"
+                        name="inquiryType"
+                        value={formData.inquiryType}
+                        onChange={handleChange}
+                      >
+                        {inquiryTypes.map((option) => (
+                          <MenuItem key={option} value={option}>
+                            {option}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Grid>
                     <Grid item xs={12}>
                       <TextField
                         fullWidth
-                        label="Message"
-                        name="message"
+                        required
                         multiline
                         rows={4}
+                        label="Message"
+                        name="message"
                         value={formData.message}
                         onChange={handleChange}
-                        required
                       />
                     </Grid>
                     <Grid item xs={12}>
@@ -243,6 +271,10 @@ export default function Contact(): JSX.Element {
                         sx={{ 
                           py: 1.5,
                           mt: 2,
+                          bgcolor: 'primary.main',
+                          '&:hover': {
+                            bgcolor: 'primary.dark',
+                          },
                         }}
                       >
                         Send Message
@@ -257,20 +289,20 @@ export default function Contact(): JSX.Element {
       </Container>
 
       {/* Success/Error Messages */}
-      <Snackbar
-        open={showSuccess}
-        autoHideDuration={6000}
+      <Snackbar 
+        open={showSuccess} 
+        autoHideDuration={6000} 
         onClose={() => setShowSuccess(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert severity="success" onClose={() => setShowSuccess(false)}>
-          Thank you for your message! We'll get back to you soon.
+          Thank you for your message! I'll get back to you as soon as possible.
         </Alert>
       </Snackbar>
 
-      <Snackbar
-        open={showError}
-        autoHideDuration={6000}
+      <Snackbar 
+        open={showError} 
+        autoHideDuration={6000} 
         onClose={() => setShowError(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >

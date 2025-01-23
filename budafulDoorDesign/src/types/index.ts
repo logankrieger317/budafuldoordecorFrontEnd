@@ -6,6 +6,13 @@ export interface Product {
   description: string;
 }
 
+export interface CustomOptions {
+  width?: string;
+  length?: string;
+  size?: string;
+}
+
 export interface CartItem extends Omit<Product, 'description'> {
   quantity: number;
+  customOptions?: CustomOptions;
 }

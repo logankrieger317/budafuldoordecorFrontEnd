@@ -13,12 +13,12 @@ export default function Cart(): JSX.Element | null {
 
   if (!isOpen) return null;
 
-  const handleQuantityUpdate = (id: string, quantity: number): void => {
-    dispatch(updateQuantity({ id, quantity }));
+  const handleUpdateQuantity = (id: string, quantity: number, options?: Record<string, string>) => {
+    dispatch(updateQuantity({ id, quantity, options }));
   };
 
-  const handleRemoveItem = (id: string): void => {
-    dispatch(removeItem(id));
+  const handleRemoveItem = (id: string, options?: Record<string, string>) => {
+    dispatch(removeItem({ id, options }));
   };
 
   return (
@@ -50,13 +50,25 @@ export default function Cart(): JSX.Element | null {
             <ListItem key={index} sx={{ py: 1 }}>
               <ListItemText
                 primary={item.name}
-                secondary={`Quantity: ${item.quantity} | Price: $${item.price}`}
+                secondary={
+                  <>
+                    {item.options && (
+                      <Typography variant="body2" color="text.secondary">
+                        Size: {item.options.width}
+                        {item.options.length && ` x ${item.options.length}`}
+                      </Typography>
+                    )}
+                    <Typography variant="body2" color="text.secondary">
+                      Quantity: {item.quantity} | Price: $${item.price}
+                    </Typography>
+                  </>
+                }
               />
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <Button
                   variant="outlined"
                   size="small"
-                  onClick={() => handleQuantityUpdate(item.id, item.quantity - 1)}
+                  onClick={() => handleUpdateQuantity(item.id, item.quantity - 1, item.options)}
                   sx={{ minWidth: 30 }}
                 >
                   -
@@ -65,7 +77,7 @@ export default function Cart(): JSX.Element | null {
                 <Button
                   variant="outlined"
                   size="small"
-                  onClick={() => handleQuantityUpdate(item.id, item.quantity + 1)}
+                  onClick={() => handleUpdateQuantity(item.id, item.quantity + 1, item.options)}
                   sx={{ minWidth: 30 }}
                 >
                   +
@@ -73,7 +85,7 @@ export default function Cart(): JSX.Element | null {
                 <IconButton
                   edge="end"
                   aria-label="delete"
-                  onClick={() => handleRemoveItem(item.id)}
+                  onClick={() => handleRemoveItem(item.id, item.options)}
                   sx={{ ml: 1 }}
                 >
                   <CloseIcon />
@@ -85,20 +97,21 @@ export default function Cart(): JSX.Element | null {
         <Divider />
         <Box sx={{ mt: 2, textAlign: 'right' }}>
           <Typography variant="subtitle1">Total: ${total.toFixed(2)}</Typography>
-          <Link to="/checkout" onClick={() => dispatch(toggleCart())}>
-            <Button variant="contained" color="primary" fullWidth sx={{ mt: 1 }}>
-              Checkout
+          <Box sx={{ mt: 1, display: 'flex', gap: 1, flexDirection: 'column' }}>
+            <Link to="/checkout" style={{ textDecoration: 'none' }} onClick={() => dispatch(toggleCart())}>
+              <Button variant="contained" color="primary" fullWidth>
+                Proceed to Checkout
+              </Button>
+            </Link>
+            <Button
+              variant="outlined"
+              color="primary"
+              fullWidth
+              onClick={() => dispatch(toggleCart())}
+            >
+              Continue Shopping
             </Button>
-          </Link>
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            sx={{ mt: 1 }}
-            onClick={() => dispatch(toggleCart())}
-          >
-            Continue Shopping
-          </Button>
+          </Box>
         </Box>
       </Box>
     </Drawer>
