@@ -1,118 +1,78 @@
 import axios from 'axios';
-import { CartItem, CustomerInfo } from '../types';
+import type { CartItem, CustomerInfo } from '../types';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 interface OrderEmailParams {
   customerInfo: CustomerInfo;
   items: CartItem[];
   total: number;
-  orderDate: string;
+  orderNumber: string;
 }
 
-class EmailService {
-  private API_URL = import.meta.env.VITE_API_URL || 'https://budafuldoordecor-production.up.railway.app';
-
-  private formatOrderData(params: OrderEmailParams) {
-    const { street = '', city = '', state = '', zipCode = '' } = params.customerInfo.address || {};
-    
-    console.log('Formatting order data with customer info:', {
-      name: `${params.customerInfo.firstName} ${params.customerInfo.lastName}`,
-      email: params.customerInfo.email,
-      phone: params.customerInfo.phone,
-      notes: params.customerInfo.notes,
-      address: params.customerInfo.address
-    });
-    
-    const formattedData = {
-      customerEmail: params.customerInfo.email,
-      customerName: `${params.customerInfo.firstName} ${params.customerInfo.lastName}`,
-      customerPhone: params.customerInfo.phone || '',
-      customerNotes: params.customerInfo.notes || '',
-      items: params.items.map(item => ({
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price,
-        total: item.price * item.quantity
-      })),
-      totalAmount: params.total,
-      shippingAddress: {
-        street,
-        city,
-        state,
-        zipCode
-      }
-    };
-
-    console.log('Formatted order data:', JSON.stringify(formattedData, null, 2));
-    return formattedData;
+// Helper function to handle API errors
+const handleApiError = (error: unknown) => {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const axiosError = error as { response?: { status: number; data: any; headers: any } };
+    if (axiosError.response) {
+      console.error('API Error Response:', axiosError.response);
+    }
   }
+  throw error;
+};
 
-  async sendOrderConfirmation(params: OrderEmailParams): Promise<boolean> {
+export const emailService = {
+  async sendOrderConfirmationEmail({ customerInfo, items, total, orderNumber }: OrderEmailParams): Promise<void> {
     try {
-      console.log('Sending order confirmation email...');
-      const orderData = this.formatOrderData(params);
-      console.log('Formatted order data:', orderData);
-
-      const response = await axios.post(`${this.API_URL}/api/email/order-confirmation`, orderData, {
+      console.log('Sending confirmation email with data:', { customerInfo, items, total, orderNumber });
+      const response = await axios.post(`${API_URL}/api/email/order-confirmation`, {
+        customerInfo,
+        items,
+        total,
+        orderNumber,
+      }, {
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
       
       if (response.status === 200) {
         console.log('Order confirmation email sent successfully');
-        return true;
       } else {
         console.error('Failed to send order confirmation email:', response.statusText);
-        return false;
+        throw new Error('Failed to send order confirmation email');
       }
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error('Failed to send order confirmation email:', error.response?.data || error.message);
-        console.error('Error details:', {
-          status: error.response?.status,
-          data: error.response?.data,
-          headers: error.response?.headers
-        });
-      } else {
-        console.error('Unexpected error sending order confirmation email:', error);
-      }
-      return false;
+      console.error('Error sending confirmation email:', error);
+      handleApiError(error);
     }
-  }
+  },
 
-  async sendOrderNotification(params: OrderEmailParams): Promise<boolean> {
+  async sendOrderNotificationEmail({ customerInfo, items, total, orderNumber }: OrderEmailParams): Promise<void> {
     try {
-      console.log('Sending order notification email...');
-      const orderData = this.formatOrderData(params);
-      console.log('Formatted order data:', orderData);
-
-      const response = await axios.post(`${this.API_URL}/api/email/order-notification`, orderData, {
+      console.log('Sending notification email with data:', { customerInfo, items, total, orderNumber });
+      const response = await axios.post(`${API_URL}/api/email/order-notification`, {
+        customerInfo,
+        items,
+        total,
+        orderNumber,
+      }, {
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
       
       if (response.status === 200) {
         console.log('Order notification email sent successfully');
-        return true;
       } else {
         console.error('Failed to send order notification email:', response.statusText);
-        return false;
+        throw new Error('Failed to send order notification email');
       }
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error('Failed to send order notification email:', error.response?.data || error.message);
-        console.error('Error details:', {
-          status: error.response?.status,
-          data: error.response?.data,
-          headers: error.response?.headers
-        });
-      } else {
-        console.error('Unexpected error sending order notification email:', error);
-      }
-      return false;
+      console.error('Error sending notification email:', error);
+      handleApiError(error);
     }
-  }
-}
+  },
+};
 
-export default new EmailService();
+export default emailService;

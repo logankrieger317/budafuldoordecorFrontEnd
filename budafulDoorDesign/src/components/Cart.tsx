@@ -1,74 +1,135 @@
-import { useSelector, useDispatch } from 'react-redux';
-import { Box, Typography, Button, IconButton, Drawer, List, ListItem, ListItemText, Divider } from '@mui/material';
-import { Close as CloseIcon } from '@mui/icons-material';
-import { RootState, AppDispatch } from '../store';
-import { toggleCart, removeItem, updateQuantity } from '../store/cartSlice';
-import { Link } from 'react-router-dom';
+import { FC } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { RootState } from "../store";
+import { removeItem, updateQuantity, toggleCart } from "../store/cartSlice";
+import { CartItem } from "../types";
+import {
+  Box,
+  Typography,
+  IconButton,
+  Button,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
+  Drawer,
+} from "@mui/material";
+import { Close as CloseIcon } from "@mui/icons-material";
 
-export default function Cart(): JSX.Element | null {
-  const dispatch = useDispatch<AppDispatch>();
+interface CartProps {
+  onClose?: () => void;
+}
+
+const Cart: FC<CartProps> = ({ onClose }) => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { items, isOpen } = useSelector((state: RootState) => state.cart);
-  
-  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  if (!isOpen) return null;
+  const total = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
-  const handleUpdateQuantity = (id: string, quantity: number, options?: Record<string, string>) => {
-    dispatch(updateQuantity({ id, quantity, options }));
+  const handleClose = () => {
+    dispatch(toggleCart());
+    onClose?.();
   };
 
-  const handleRemoveItem = (id: string, options?: Record<string, string>) => {
-    dispatch(removeItem({ id, options }));
+  const handleUpdateQuantity = (sku: string, newQuantity: number) => {
+    if (newQuantity > 0) {
+      dispatch(updateQuantity({ sku: sku, quantity: newQuantity }));
+    }
+  };
+
+  const handleRemoveItem = (sku: string) => {
+    dispatch(removeItem({ sku: sku }));
+  };
+
+  const handleCheckout = () => {
+    handleClose();
+    navigate('/checkout');
   };
 
   return (
-    <Drawer 
-      anchor="right" 
-      open={isOpen} 
-      onClose={() => dispatch(toggleCart())}
-      ModalProps={{
-        keepMounted: false,
-        disableScrollLock: true
-      }}
+    <Drawer
+      anchor="right"
+      open={isOpen}
+      onClose={handleClose}
       sx={{
-        '& .MuiDrawer-paper': { width: 300 },
-        '& .MuiBackdrop-root': {
-          display: isOpen ? 'block' : 'none'
-        }
+        '& .MuiDrawer-paper': {
+          width: { xs: '100%', sm: 400 },
+          bgcolor: 'background.paper',
+          boxSizing: 'border-box',
+        },
       }}
     >
-      <Box sx={{ width: 300, p: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6">Your Cart</Typography>
-          <IconButton onClick={() => dispatch(toggleCart())}>
-            <CloseIcon />
-          </IconButton>
+      <Box sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+          }}
+        >
+          <Typography variant="h6">Shopping Cart</Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Typography variant="subtitle1">
+              Total: ${total.toFixed(2)}
+            </Typography>
+            <IconButton onClick={handleClose} size="small">
+              <CloseIcon />
+            </IconButton>
+          </Box>
         </Box>
         <Divider />
-        <List>
-          {items.map((item, index) => (
-            <ListItem key={index} sx={{ py: 1 }}>
+        <List sx={{ flexGrow: 1, overflowY: 'auto' }}>
+          {items.map((item: CartItem) => (
+            <ListItem 
+              key={item.sku}
+              sx={{
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'stretch', sm: 'center' },
+                gap: 1,
+              }}
+            >
               <ListItemText
                 primary={item.name}
                 secondary={
                   <>
-                    {item.options && (
-                      <Typography variant="body2" color="text.secondary">
-                        Size: {item.options.width}
-                        {item.options.length && ` x ${item.options.length}`}
-                      </Typography>
-                    )}
                     <Typography variant="body2" color="text.secondary">
-                      Quantity: {item.quantity} | Price: $${item.price}
+                      ${item.price.toFixed(2)} x {item.quantity}
                     </Typography>
+                    {item.customOptions && (
+                      <>
+                        <Typography variant="body2" color="text.secondary">
+                          Width: {item.customOptions.width}" | Length:{" "}
+                          {item.customOptions.length}"
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Type:{" "}
+                          {item.customOptions.isWired ? "Wired" : "Non-wired"}
+                        </Typography>
+                      </>
+                    )}
                   </>
                 }
               />
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box 
+                sx={{ 
+                  display: "flex", 
+                  alignItems: "center",
+                  justifyContent: { xs: 'center', sm: 'flex-end' },
+                  width: { xs: '100%', sm: 'auto' },
+                }}
+              >
                 <Button
                   variant="outlined"
                   size="small"
-                  onClick={() => handleUpdateQuantity(item.id, item.quantity - 1, item.options)}
+                  onClick={() =>
+                    handleUpdateQuantity(item.sku, item.quantity - 1)
+                  }
                   sx={{ minWidth: 30 }}
                 >
                   -
@@ -77,7 +138,9 @@ export default function Cart(): JSX.Element | null {
                 <Button
                   variant="outlined"
                   size="small"
-                  onClick={() => handleUpdateQuantity(item.id, item.quantity + 1, item.options)}
+                  onClick={() =>
+                    handleUpdateQuantity(item.sku, item.quantity + 1)
+                  }
                   sx={{ minWidth: 30 }}
                 >
                   +
@@ -85,7 +148,7 @@ export default function Cart(): JSX.Element | null {
                 <IconButton
                   edge="end"
                   aria-label="delete"
-                  onClick={() => handleRemoveItem(item.id, item.options)}
+                  onClick={() => handleRemoveItem(item.sku)}
                   sx={{ ml: 1 }}
                 >
                   <CloseIcon />
@@ -94,28 +157,21 @@ export default function Cart(): JSX.Element | null {
             </ListItem>
           ))}
         </List>
-        <Divider />
-        <Box sx={{ mt: 2, textAlign: 'right' }}>
-          <Typography variant="subtitle1">Total: ${total.toFixed(2)}</Typography>
-          <Box sx={{ mt: 1, display: 'flex', gap: 1, flexDirection: 'column' }}>
-            {items.length > 0 && (
-              <Link to="/checkout" style={{ textDecoration: 'none' }} onClick={() => dispatch(toggleCart())}>
-                <Button variant="contained" color="primary" fullWidth>
-                  Proceed to Checkout
-                </Button>
-              </Link>
-            )}
-            <Button
-              variant="outlined"
-              color="primary"
+        {items.length > 0 && (
+          <Box sx={{ mt: 2 }}>
+            <Button 
+              variant="contained" 
+              color="primary" 
               fullWidth
-              onClick={() => dispatch(toggleCart())}
+              onClick={handleCheckout}
             >
-              Continue Shopping
+              Proceed to Checkout
             </Button>
           </Box>
-        </Box>
+        )}
       </Box>
     </Drawer>
   );
-}
+};
+
+export default Cart;

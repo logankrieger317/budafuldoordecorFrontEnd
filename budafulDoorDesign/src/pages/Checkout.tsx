@@ -24,6 +24,7 @@ import {
 import { RootState } from "../store/store";
 import { clearCart } from "../store/cartSlice";
 import emailService from "../services/emailService";
+import orderService from '../services/orderService';
 import { CustomerInfo, CartItem } from "../types";
 
 const initialCustomerInfo: CustomerInfo = {
@@ -186,59 +187,55 @@ export default function Checkout(): JSX.Element {
     // Validate form first
     if (!validateForm()) {
       setErrorMessage("Please fill in all required fields correctly");
+      setShowError(true);
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Log customer info before preparing order details
-      console.log("Customer info before submission:", {
-        firstName: customerInfo.firstName,
-        lastName: customerInfo.lastName,
-        email: customerInfo.email,
-        phone: customerInfo.phone,
-        notes: customerInfo.notes,
-        address: customerInfo.address,
-      });
+      // Generate a unique order number
+      const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-      // Prepare order details
-      const orderDetails = {
+      // Create order in database
+      const order = await orderService.createOrder({
         customerInfo,
         items,
         total,
-        orderDate: new Date().toISOString(),
-      };
+        orderNumber,
+      });
 
-      console.log(
-        "Order details before sending:",
-        JSON.stringify(orderDetails, null, 2)
-      );
+      console.log('Order created:', order);
 
-      // Send confirmation email to customer
-      const emailSuccess = await emailService.sendOrderConfirmation(
-        orderDetails
-      );
-      console.log("Confirmation email result:", emailSuccess);
+      // Send confirmation emails
+      await emailService.sendOrderConfirmationEmail({
+        customerInfo,
+        items,
+        total,
+        orderNumber: order.orderNumber,
+      });
 
-      // Send notification email to admin
-      const notificationSuccess = await emailService.sendOrderNotification(
-        orderDetails
-      );
-      console.log("Notification email result:", notificationSuccess);
+      await emailService.sendOrderNotificationEmail({
+        customerInfo,
+        items,
+        total,
+        orderNumber: order.orderNumber,
+      });
 
-      if (!emailSuccess || !notificationSuccess) {
-        setErrorMessage(
-          "Order placed but there was an issue sending confirmation emails."
-        );
-      }
-
-      // Clear cart and redirect to confirmation page
+      // Clear cart and redirect to success page
       dispatch(clearCart());
-      navigate("/checkout/order-confirmation");
+      navigate("/order-confirmation", {
+        state: {
+          orderNumber: order.orderNumber,
+          orderId: order.id,
+          total,
+          customerInfo,
+        },
+      });
     } catch (error) {
       console.error("Error processing order:", error);
       setErrorMessage("Failed to process order. Please try again.");
+      setShowError(true);
     } finally {
       setIsSubmitting(false);
     }

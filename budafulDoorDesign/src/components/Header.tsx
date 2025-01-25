@@ -74,15 +74,26 @@ export default function Header(): JSX.Element {
               <Button
                 key={item.text}
                 onClick={() => handleMenuItemClick(item.path)}
-                sx={{ fontWeight: 500 }}
+                sx={{ 
+                  fontWeight: 500,
+                  color: 'primary.main',
+                  '&:hover': {
+                    color: 'primary.dark',
+                  }
+                }}
               >
                 {item.text}
               </Button>
             ))}
             <IconButton
-              color="inherit"
               onClick={() => dispatch(toggleCart())}
-              sx={{ ml: 2 }}
+              sx={{ 
+                ml: 2,
+                color: 'primary.main',
+                '&:hover': {
+                  color: 'primary.dark',
+                }
+              }}
             >
               <ShoppingCartIcon />
               {itemCount > 0 && (
@@ -111,8 +122,13 @@ export default function Header(): JSX.Element {
           {/* Mobile Menu */}
           <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 1, alignItems: 'center' }}>
             <IconButton
-              color="inherit"
               onClick={() => dispatch(toggleCart())}
+              sx={{ 
+                color: 'primary.main',
+                '&:hover': {
+                  color: 'primary.dark',
+                }
+              }}
             >
               <ShoppingCartIcon />
               {itemCount > 0 && (
@@ -137,9 +153,14 @@ export default function Header(): JSX.Element {
               )}
             </IconButton>
             <IconButton
-              color="inherit"
               edge="end"
               onClick={handleMenuClick}
+              sx={{ 
+                color: 'primary.main',
+                '&:hover': {
+                  color: 'primary.dark',
+                }
+              }}
             >
               {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
             </IconButton>
@@ -171,10 +192,11 @@ export default function Header(): JSX.Element {
                 key={item.text}
                 onClick={() => handleMenuItemClick(item.path)}
                 sx={{ 
-                  color: 'inherit',
+                  color: 'primary.main',
                   textDecoration: 'none',
                   '&:hover': {
-                    bgcolor: 'action.hover'
+                    bgcolor: 'action.hover',
+                    color: 'primary.dark',
                   }
                 }}
               >

@@ -1,102 +1,104 @@
-import express, { Express, Request, Response, NextFunction } from 'express';
-import cors from 'cors';
+import express from 'express';
+import { Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
-import nodemailer from 'nodemailer';
-import productRoutes from './routes/productRoutes';
-import dbRoutes from './db/routes';
-import { errorHandler } from './middleware/errorHandler';
+import cors from 'cors';
+import { productRoutes } from './routes/productRoutes';
+import { uploadRoutes } from './routes/upload.routes';
 import { requestLogger } from './middleware/requestLogger';
+import { errorHandler } from './middleware/errorHandler';
 import { AppError } from './types/errors';
+import { initializeDatabase } from './models';
 
 // Load environment variables
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
 }
 
-const app: Express = express();
+const app = express();
+const port = process.env.PORT || 3001;
 
-// Configure CORS to accept requests from your frontend
+// Configure CORS
 const allowedOrigins = [
-  'http://localhost:5173',  // Local development
+  'http://localhost:5173',  // Vite development
   'http://localhost:3000',  // Alternative local development
+  'http://127.0.0.1:5173', // Vite development alternative
+  'http://127.0.0.1:3000', // Alternative local development
   'https://budafuldoordecor.com',
-  'https://www.budafuldoordecor.com'
+  'https://www.budafuldoordecor.com',
+  'https://budafuldoordecor.vercel.app', // Production frontend
+  'https://www.budafuldoordecor.vercel.app', // Production frontend with www
+  'https://budafuldoordecor-production.up.railway.app' // Railway backend
 ];
 
 const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+  origin: function(origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) {
+      return callback(null, true);
     }
+
+    if (process.env.NODE_ENV !== 'production') {
+      // In development, log the origin for debugging
+      console.log('Request origin:', origin);
+      // Allow all origins in development
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    console.log('Blocked origin:', origin);
+    callback(new Error('Not allowed by CORS'));
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 
-// Middleware
 app.use(cors(corsOptions));
+
+// Middleware
 app.use(express.json());
 app.use(requestLogger);
 
-// Routes
-app.use('/api/db', dbRoutes);
-app.use('/api/products', productRoutes);
-
-// Health check endpoint
-app.get('/health', (req: Request, res: Response) => {
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+// Health check route
+app.get('/health', (_req: Request, res: Response) => {
+  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-// Only validate email variables if we're using email features
-if (process.env.USE_EMAIL === 'true') {
-  const requiredEnvVars = ['EMAIL_USER', 'EMAIL_PASSWORD', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_SECURE'];
-  const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
-  
-  if (missingEnvVars.length > 0) {
-    console.error('Missing required environment variables:', missingEnvVars);
+// Initialize database and start server
+const startServer = async () => {
+  try {
+    // Initialize database first
+    await initializeDatabase();
+    console.log('Database initialized successfully');
+
+    // Only set up routes after database is initialized
+    app.use('/api/products', productRoutes);
+    app.use('/api/upload', uploadRoutes);
+
+    // Error handling
+    app.use(errorHandler);
+
+    // 404 handler
+    app.use((_req: Request, res: Response, next: NextFunction) => {
+      next(new AppError('Route not found', 404));
+    });
+
+    // Start server
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+      console.log('Environment:', process.env.NODE_ENV);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
     process.exit(1);
   }
-
-  // Create email transporter
-  const transporter = nodemailer.createTransport({
-    pool: true,
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
-    debug: true,
-    logger: true,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD?.replace(/^"|"$/g, '')
-    },
-    tls: {
-      rejectUnauthorized: true,
-      minVersion: 'TLSv1.2'
-    }
-  });
-
-  // Verify email configuration
-  transporter.verify((error: Error | null) => {
-    if (error) {
-      console.error('SMTP Verification Error:', error);
-    } else {
-      console.log('SMTP Server is ready to take our messages');
-    }
-  });
-}
-
-// 404 handler
-app.use((req: Request, res: Response, next: NextFunction) => {
-  next(new AppError(`Cannot ${req.method} ${req.originalUrl}`, 404));
-});
-
-// Error handling
-app.use(errorHandler);
+};
 
 // Start the server
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+startServer().catch(error => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
 });

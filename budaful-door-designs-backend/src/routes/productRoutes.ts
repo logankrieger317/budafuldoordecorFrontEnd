@@ -1,24 +1,24 @@
 import { Router } from 'express';
-import * as productController from '../controllers/productController';
+import { productController } from '../controllers/productController';
 
 const router = Router();
 
 // Get all products
 router.get('/', productController.getAllProducts);
 
+// Get product by SKU
+router.get('/:sku', productController.getProductBySku);
+
 // Get products by category
 router.get('/category/:category', productController.getProductsByCategory);
 
-// Get a single product
-router.get('/:id', productController.getProductById);
-
-// Create a new product
+// Create new product
 router.post('/', productController.createProduct);
 
-// Update a product
-router.put('/:id', productController.updateProduct);
+// Update product
+router.put('/:sku', productController.updateProduct);
 
-// Delete a product
-router.delete('/:id', productController.deleteProduct);
+// Delete product
+router.delete('/:sku', productController.deleteProduct);
 
-export default router;
+export const productRoutes = router;

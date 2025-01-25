@@ -1,18 +1,30 @@
 export interface Product {
-  id: string;
+  sku: string;
   name: string;
+  description?: string;
   price: number;
-  image: string;
-  description: string;
+  imageUrl?: string;
+  category: string;
+  width: number;
+  length: number;
+  isWired: boolean;
+  quantity: number;
 }
 
 export interface CustomOptions {
   width?: string;
   length?: string;
-  size?: string;
+  isWired?: boolean;
 }
 
-export interface CartItem extends Omit<Product, 'description'> {
+export interface CartItem {
+  sku: string;
+  name: string;
+  price: number;
+  imageUrl?: string;
   quantity: number;
+  width: number;
+  length: number;
+  isWired: boolean;
   customOptions?: CustomOptions;
 }
