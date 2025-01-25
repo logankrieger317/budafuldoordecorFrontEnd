@@ -13,46 +13,42 @@ interface CreateOrderParams {
 interface OrderResponse {
   id: string;
   orderNumber: string;
+  customerFirstName: string;
+  customerLastName: string;
+  customerEmail: string;
+  customerPhone: string;
+  shippingStreet: string;
+  shippingCity: string;
+  shippingState: string;
+  shippingZipCode: string;
+  orderItems: CartItem[];
+  total: string;
+  notes: string;
   status: string;
 }
 
-export const orderService = {
-  async createOrder({ customerInfo, items, total, orderNumber }: CreateOrderParams): Promise<OrderResponse> {
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+}
+
+const orderService = {
+  async createOrder({ customerInfo, items, total, orderNumber }: CreateOrderParams): Promise<ApiResponse<OrderResponse>> {
     try {
       console.log('Creating order with data:', { customerInfo, items, total, orderNumber });
-      const response = await axios.post(`${API_URL}/api/orders`, {
+      const response = await axios.post<ApiResponse<OrderResponse>>(`${API_URL}/api/orders`, {
         customerInfo,
         items,
         total,
         orderNumber,
       });
       
-      return response.data.order;
+      return response.data;
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;
     }
-  },
-
-  async getOrder(orderId: string): Promise<any> {
-    try {
-      const response = await axios.get(`${API_URL}/api/orders/${orderId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching order:', error);
-      throw error;
-    }
-  },
-
-  async getOrderByNumber(orderNumber: string): Promise<any> {
-    try {
-      const response = await axios.get(`${API_URL}/api/orders/number/${orderNumber}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching order:', error);
-      throw error;
-    }
-  },
+  }
 };
 
 export default orderService;

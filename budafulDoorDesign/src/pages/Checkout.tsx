@@ -23,8 +23,7 @@ import {
 } from "@mui/material";
 import { RootState } from "../store/store";
 import { clearCart } from "../store/cartSlice";
-import emailService from "../services/emailService";
-import orderService from '../services/orderService';
+import orderService from "../services/orderService";
 import { CustomerInfo, CartItem } from "../types";
 
 const initialCustomerInfo: CustomerInfo = {
@@ -195,32 +194,20 @@ export default function Checkout(): JSX.Element {
 
     try {
       // Generate a unique order number
-      const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const orderNumber = `ORD-${Date.now()}-${Math.floor(
+        Math.random() * 1000
+      )}`;
 
       // Create order in database
-      const order = await orderService.createOrder({
+      const response = await orderService.createOrder({
         customerInfo,
         items,
         total,
         orderNumber,
       });
 
-      console.log('Order created:', order);
-
-      // Send confirmation emails
-      await emailService.sendOrderConfirmationEmail({
-        customerInfo,
-        items,
-        total,
-        orderNumber: order.orderNumber,
-      });
-
-      await emailService.sendOrderNotificationEmail({
-        customerInfo,
-        items,
-        total,
-        orderNumber: order.orderNumber,
-      });
+      const order = response.data;
+      console.log("Order created:", order);
 
       // Clear cart and redirect to success page
       dispatch(clearCart());
@@ -229,14 +216,12 @@ export default function Checkout(): JSX.Element {
           orderNumber: order.orderNumber,
           orderId: order.id,
           total,
-          customerInfo,
+          customerInfo: customerInfo,
         },
       });
     } catch (error) {
       console.error("Error processing order:", error);
-      setErrorMessage("Failed to process order. Please try again.");
-      setShowError(true);
-    } finally {
+      setErrorMessage("Failed to process your order. Please try again.");
       setIsSubmitting(false);
     }
   };

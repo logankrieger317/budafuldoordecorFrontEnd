@@ -40,20 +40,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       console.warn("ProductCard received undefined product");
       return;
     }
-
-    console.log("ProductCard received product:", {
-      sku: product.sku,
-      name: product.name,
-      price: product.price,
-      category: product.category,
-      quantity: product.quantity,
-      width: product.width,
-      length: product.length,
-      isWired: product.isWired,
-      imageUrl: product.imageUrl,
-      description: product.description,
-      fullProduct: product, // Log the full product object for complete inspection
-    });
   }, [product]);
 
   if (!product) {

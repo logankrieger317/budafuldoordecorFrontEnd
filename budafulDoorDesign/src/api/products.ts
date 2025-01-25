@@ -9,15 +9,9 @@ export type UpdateProductInput = Partial<CreateProductInput>;
 // Helper function to handle API errors
 const handleApiError = (error: unknown) => {
   if (error && typeof error === 'object' && 'response' in error) {
-    const axiosError = error as { response?: { status: number; data: any; headers: any } };
-    if (axiosError.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      console.error('API Error Response:', {
-        status: axiosError.response.status,
-        data: axiosError.response.data,
-        headers: axiosError.response.headers,
-      });
+    const response = (error as any).response;
+    if (response?.data?.message) {
+      throw new Error(response.data.message);
     }
   }
   throw error;
@@ -26,10 +20,10 @@ const handleApiError = (error: unknown) => {
 // API methods
 export const productsApi = {
   // Get all products
-  getAllProducts: async (): Promise<Product[]> => {
+  async getAllProducts(): Promise<Product[]> {
     try {
-      console.log('Fetching from URL:', `${API_URL}/api/products`); // Debug log
-      const response = await axios.get<Product[]>(`${API_URL}/api/products`);
+      console.log('Fetching from URL:', `${API_URL}/api/products`);
+      const response = await axios.get(`${API_URL}/api/products`);
       return response.data;
     } catch (error) {
       return handleApiError(error);
@@ -37,9 +31,9 @@ export const productsApi = {
   },
 
   // Get product by SKU
-  getProductBySku: async (sku: string): Promise<Product> => {
+  async getProductBySku(sku: string): Promise<Product> {
     try {
-      const response = await axios.get<Product>(`${API_URL}/api/products/${sku}`);
+      const response = await axios.get(`${API_URL}/api/products/${sku}`);
       return response.data;
     } catch (error) {
       return handleApiError(error);
@@ -47,9 +41,9 @@ export const productsApi = {
   },
 
   // Get products by category
-  getProductsByCategory: async (category: string): Promise<Product[]> => {
+  async getProductsByCategory(category: string): Promise<Product[]> {
     try {
-      const response = await axios.get<Product[]>(`${API_URL}/api/products/category/${category}`);
+      const response = await axios.get(`${API_URL}/api/products/category/${category}`);
       return response.data;
     } catch (error) {
       return handleApiError(error);
@@ -57,9 +51,9 @@ export const productsApi = {
   },
 
   // Create new product
-  create: async (product: CreateProductInput): Promise<Product> => {
+  async create(product: CreateProductInput): Promise<Product> {
     try {
-      const response = await axios.post<Product>(`${API_URL}/api/products`, product);
+      const response = await axios.post(`${API_URL}/api/products`, product);
       return response.data;
     } catch (error) {
       return handleApiError(error);
@@ -67,9 +61,9 @@ export const productsApi = {
   },
 
   // Update product
-  update: async (sku: string, product: UpdateProductInput): Promise<Product> => {
+  async update(sku: string, product: UpdateProductInput): Promise<Product> {
     try {
-      const response = await axios.put<Product>(`${API_URL}/api/products/${sku}`, product);
+      const response = await axios.put(`${API_URL}/api/products/${sku}`, product);
       return response.data;
     } catch (error) {
       return handleApiError(error);
@@ -77,9 +71,9 @@ export const productsApi = {
   },
 
   // Update product quantity
-  updateQuantity: async (sku: string, quantity: number): Promise<Product> => {
+  async updateQuantity(sku: string, quantity: number): Promise<Product> {
     try {
-      const response = await axios.patch<Product>(`${API_URL}/api/products/${sku}/quantity`, { quantity });
+      const response = await axios.patch(`${API_URL}/api/products/${sku}/quantity`, { quantity });
       return response.data;
     } catch (error) {
       return handleApiError(error);
@@ -87,13 +81,13 @@ export const productsApi = {
   },
 
   // Delete product
-  delete: async (sku: string): Promise<void> => {
+  async delete(sku: string): Promise<void> {
     try {
       await axios.delete(`${API_URL}/api/products/${sku}`);
     } catch (error) {
-      handleApiError(error);
+      return handleApiError(error);
     }
-  },
+  }
 };
 
 export default productsApi;
