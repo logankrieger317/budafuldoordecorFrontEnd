@@ -1,32 +1,59 @@
-import { Sequelize } from 'sequelize';
-import dotenv from 'dotenv';
+import { Dialect } from 'sequelize';
+import { config } from 'dotenv';
 
-dotenv.config();
+config();
 
-const databaseUrl = process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-  throw new Error('DATABASE_URL environment variable is not set');
+interface DatabaseConfig {
+  username: string;
+  password: string;
+  database: string;
+  host: string;
+  dialect: Dialect;
+  dialectOptions?: {
+    ssl?: {
+      require: boolean;
+      rejectUnauthorized: boolean;
+    };
+  };
 }
 
-export const db = new Sequelize(databaseUrl, {
-  dialect: 'postgres',
-  logging: false,
-  dialectOptions: {
-    ssl: process.env.NODE_ENV === 'production' ? {
-      require: true,
-      rejectUnauthorized: false,
-    } : false,
+interface Config {
+  development: DatabaseConfig;
+  test: DatabaseConfig;
+  production: DatabaseConfig & {
+    use_env_variable: string;
+  };
+}
+
+const dbConfig: Config = {
+  development: {
+    username: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || 'postgres',
+    database: process.env.DB_NAME || 'budaful_door_designs_dev',
+    host: process.env.DB_HOST || '127.0.0.1',
+    dialect: 'postgres'
   },
-});
+  test: {
+    username: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || 'postgres',
+    database: process.env.DB_NAME || 'budaful_door_designs_test',
+    host: process.env.DB_HOST || '127.0.0.1',
+    dialect: 'postgres'
+  },
+  production: {
+    username: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || 'postgres',
+    database: process.env.DB_NAME || 'budaful_door_designs',
+    host: process.env.DB_HOST || '127.0.0.1',
+    use_env_variable: 'DATABASE_URL',
+    dialect: 'postgres',
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false
+      }
+    }
+  }
+};
 
-// Test the connection
-db.authenticate()
-  .then(() => {
-    console.log('Database connection has been established successfully.');
-  })
-  .catch(err => {
-    console.error('Unable to connect to the database:', err);
-  });
-
-export default db;
+export = dbConfig;

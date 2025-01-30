@@ -1,123 +1,77 @@
 import { Sequelize } from 'sequelize';
-import { DB } from '../types/models';
-import { initProduct } from './product';
-import { initOrder } from './order.model';
+import { Product } from './product.model';
+import { Order } from './order.model';
+import { OrderItem } from './order-item.model';
+import dbConfig from '../config/database';
 
 const env = process.env.NODE_ENV || 'development';
-const config = require('../config/config.json')[env];
+const config = dbConfig[env as keyof typeof dbConfig];
 
-// Create a singleton instance
 export class Database {
   private static instance: Database;
-  private _db: DB = {
-    sequelize: null as any,
-    Sequelize,
-    Product: null as any,
-    Order: null as any
-  };
-  private initialized = false;
+  public sequelize: Sequelize;
+  public Product: typeof Product;
+  public Order: typeof Order;
+  public OrderItem: typeof OrderItem;
 
-  private constructor() {}
+  private constructor() {
+    if (env === 'production') {
+      const prodConfig = config as typeof dbConfig.production;
+      const dbUrl = process.env[prodConfig.use_env_variable];
+      if (!dbUrl) {
+        throw new Error('DATABASE_URL environment variable is not set');
+      }
+      this.sequelize = new Sequelize(dbUrl, {
+        dialect: 'postgres',
+        dialectOptions: prodConfig.dialectOptions,
+        logging: false
+      });
+    } else {
+      const devConfig = config as typeof dbConfig.development;
+      this.sequelize = new Sequelize(devConfig.database, devConfig.username, devConfig.password, {
+        host: devConfig.host,
+        dialect: devConfig.dialect,
+        logging: process.env.NODE_ENV !== 'production'
+      });
+    }
 
-  static getInstance(): Database {
+    // Initialize models
+    this.Product = Product.initModel(this.sequelize);
+    this.Order = Order.initModel(this.sequelize);
+    this.OrderItem = OrderItem.initModel(this.sequelize);
+
+    // Set up associations
+    this.Order.hasMany(this.OrderItem, {
+      foreignKey: 'orderId',
+      as: 'items'
+    });
+    this.OrderItem.belongsTo(this.Order, {
+      foreignKey: 'orderId'
+    });
+    this.OrderItem.belongsTo(this.Product, {
+      foreignKey: 'productSku',
+      targetKey: 'sku'
+    });
+    this.Product.hasMany(this.OrderItem, {
+      foreignKey: 'productSku',
+      sourceKey: 'sku'
+    });
+  }
+
+  public static getInstance(): Database {
     if (!Database.instance) {
       Database.instance = new Database();
     }
     return Database.instance;
   }
 
-  get db(): DB {
-    if (!this.initialized) {
-      throw new Error('Database not initialized. Call initializeDatabase() first.');
-    }
-    return this._db;
-  }
-
-  // Initialize database
-  async initialize(): Promise<DB> {
-    if (this.initialized) {
-      return this._db;
-    }
-
+  public async connect(): Promise<void> {
     try {
-      let sequelize: Sequelize;
-      
-      if (process.env.DATABASE_URL) {
-        console.log('Using DATABASE_URL for connection');
-        sequelize = new Sequelize(process.env.DATABASE_URL, {
-          dialect: 'postgres',
-          dialectOptions: {
-            ssl: {
-              require: true,
-              rejectUnauthorized: false
-            }
-          },
-          logging: false, // Disable logging for production
-          pool: {
-            max: 5,
-            min: 0,
-            acquire: 30000,
-            idle: 10000
-          }
-        });
-      } else if (config.use_env_variable && process.env[config.use_env_variable]) {
-        console.log(`Using ${config.use_env_variable} for connection`);
-        sequelize = new Sequelize(process.env[config.use_env_variable] as string, config);
-      } else {
-        console.log('Using local config for connection');
-        sequelize = new Sequelize(config.database, config.username, config.password, {
-          ...config,
-          dialect: 'postgres'
-        });
-      }
-
-      // Test the connection
-      await sequelize.authenticate();
+      await this.sequelize.authenticate();
       console.log('Database connection has been established successfully.');
-
-      // Initialize models
-      console.log('[DEBUG] Initializing models...');
-      const Product = initProduct(sequelize);
-      const Order = initOrder(sequelize);
-
-      // Update the db object with initialized values
-      this._db = {
-        sequelize,
-        Sequelize,
-        Product,
-        Order
-      };
-
-      console.log('[DEBUG] Models initialized successfully');
-      console.log('[DEBUG] Available models:', Object.keys(this._db).join(', '));
-
-      // Force sync in development
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[DEBUG] Development environment detected, running alter sync');
-        await sequelize.sync({ alter: true });
-      } else {
-        console.log('[DEBUG] Production environment detected, running normal sync');
-        await sequelize.sync();
-      }
-
-      this.initialized = true;
-      console.log('Models initialized:', Object.keys(this._db).join(', '));
-      return this._db;
     } catch (error) {
-      console.error('Unable to initialize database:', error);
+      console.error('Unable to connect to the database:', error);
       throw error;
     }
   }
 }
-
-// Export the initialization function
-export const initializeDatabase = async (): Promise<DB> => {
-  const database = Database.getInstance();
-  return database.initialize();
-};
-
-// Export a function to get the database instance
-export const getDatabase = (): DB => {
-  const database = Database.getInstance();
-  return database.db;
-};

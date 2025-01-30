@@ -1,27 +1,32 @@
-import express from 'express';
-import { productController } from '../controllers/productController';
+import { Router } from 'express';
+import { productController } from '../controllers/product.controller';
+import { body } from 'express-validator';
+import { validateRequest } from '../middleware/validateRequest';
 
-const router = express.Router();
+const router = Router();
 
-// Get all products
-router.get('/', productController.getAllProducts.bind(productController));
+// Validation middleware
+const createProductValidation = [
+  body('name').trim().notEmpty().withMessage('Name is required'),
+  body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
+  body('category').trim().notEmpty().withMessage('Category is required'),
+  body('width').isFloat({ min: 0 }).withMessage('Width must be a positive number'),
+  body('length').isFloat({ min: 0 }).withMessage('Length must be a positive number'),
+  body('isWired').isBoolean().withMessage('isWired must be a boolean'),
+  body('quantity').optional().isInt({ min: 0 }).withMessage('Quantity must be a non-negative integer'),
+  validateRequest
+];
 
-// Get product by SKU
-router.get('/:sku', productController.getProductBySku.bind(productController));
+const updateQuantityValidation = [
+  body('quantity').isInt({ min: 0 }).withMessage('Quantity must be a non-negative integer'),
+  validateRequest
+];
 
-// Get products by category
-router.get('/category/:category', productController.getProductsByCategory.bind(productController));
-
-// Create new product
-router.post('/', productController.createProduct.bind(productController));
-
-// Update product
-router.put('/:sku', productController.updateProduct.bind(productController));
-
-// Delete product
-router.delete('/:sku', productController.deleteProduct.bind(productController));
-
-// Update product quantity
-router.patch('/:sku/quantity', productController.updateQuantity.bind(productController));
+// Routes
+router.get('/', productController.getAllProducts);
+router.get('/:sku', productController.getProductBySku);
+router.post('/', createProductValidation, productController.createProduct);
+router.patch('/:sku/quantity', updateQuantityValidation, productController.updateQuantity);
+router.delete('/:sku', productController.deleteProduct);
 
 export default router;

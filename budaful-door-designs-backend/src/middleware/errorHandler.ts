@@ -1,20 +1,24 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
 import { AppError } from '../types/errors';
-import { ErrorRequestHandler } from './types';
 
-export const errorHandler: ErrorRequestHandler = (error: Error | AppError, req: Request, res: Response, next: NextFunction) => {
-  console.error(error);
-
-  if (error instanceof AppError) {
-    res.status(error.statusCode).json({
+export const errorHandler: ErrorRequestHandler = (
+  err: Error,
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  if (err instanceof AppError) {
+    res.status(err.statusCode).json({
       status: 'error',
-      message: error.message,
+      message: err.message
     });
     return;
   }
 
+  console.error('Unhandled error:', err);
+  
   res.status(500).json({
     status: 'error',
-    message: 'Internal server error',
+    message: 'Internal server error'
   });
 };

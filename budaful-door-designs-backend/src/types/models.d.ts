@@ -1,6 +1,3 @@
-import { Model, Optional, BuildOptions, Sequelize, ModelStatic } from 'sequelize';
-
-// Product Types
 export interface ProductAttributes {
   sku: string;
   name: string;
@@ -14,54 +11,34 @@ export interface ProductAttributes {
   quantity: number;
   createdAt?: Date;
   updatedAt?: Date;
-  deletedAt?: Date | null;
 }
 
-// Product Creation Attributes Interface
-export interface ProductCreationAttributes extends Optional<ProductAttributes, 'createdAt' | 'updatedAt' | 'deletedAt'> {}
+export interface ProductCreationAttributes extends Omit<ProductAttributes, 'createdAt' | 'updatedAt'> {}
 
-// Product Instance Interface
-export interface ProductInstance extends Model<ProductAttributes, ProductCreationAttributes>, ProductAttributes {
-  dataValues: ProductAttributes;
-}
-
-// Product Model Static Interface
-export type ProductModel = ModelStatic<ProductInstance> & {
-  associate?: (models: any) => void;
-};
-
-// User Attributes Interface
-export interface UserAttributes {
+export interface OrderAttributes {
   id: string;
-  name: string;
-  role: 'admin' | 'manager' | 'user';
+  customerEmail: string;
+  customerName: string;
+  shippingAddress: string;
+  billingAddress: string;
+  totalAmount: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  paymentStatus: 'pending' | 'completed' | 'failed' | 'refunded';
+  paymentIntentId?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-// User Creation Attributes Interface
-export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'role' | 'createdAt' | 'updatedAt'> {}
+export interface OrderCreationAttributes extends Omit<OrderAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
 
-// User Instance Interface
-export interface UserInstance extends Model<UserAttributes, UserCreationAttributes>, UserAttributes {
-  dataValues: UserAttributes;
+export interface OrderItemAttributes {
+  id: string;
+  orderId: string;
+  productSku: string;
+  quantity: number;
+  priceAtTime: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-// User Model Static Interface
-export type UserModel = ModelStatic<UserInstance> & {
-  associate?: (models: any) => void;
-};
-
-// Database Interface
-export interface DB {
-  sequelize: Sequelize;
-  Sequelize: typeof Sequelize;
-  Product: ProductModel;
-  User: UserModel;
-}
-
-// Declare module for models/index.js
-declare module '../../models' {
-  const db: DB;
-  export = db;
-}
+export interface OrderItemCreationAttributes extends Omit<OrderItemAttributes, 'id' | 'createdAt' | 'updatedAt'> {}

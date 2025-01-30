@@ -1,36 +1,24 @@
 export class AppError extends Error {
-  public readonly statusCode: number;
-  public readonly isOperational: boolean;
-
-  constructor(message: string, statusCode: number) {
+  constructor(
+    public statusCode: number,
+    message: string
+  ) {
     super(message);
-    this.statusCode = statusCode;
-    this.isOperational = true;
-
+    this.name = 'AppError';
     Error.captureStackTrace(this, this.constructor);
   }
 }
 
 export class NotFoundError extends AppError {
   constructor(message: string = 'Resource not found') {
-    super(message, 404);
+    super(404, message);
+    this.name = 'NotFoundError';
   }
 }
 
 export class ValidationError extends AppError {
   constructor(message: string = 'Validation failed') {
-    super(message, 400);
-  }
-}
-
-export class AuthenticationError extends AppError {
-  constructor(message: string = 'Authentication failed') {
-    super(message, 401);
-  }
-}
-
-export class AuthorizationError extends AppError {
-  constructor(message: string = 'Not authorized') {
-    super(message, 403);
+    super(400, message);
+    this.name = 'ValidationError';
   }
 }
